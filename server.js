@@ -1,9 +1,9 @@
-// @ts-nocheck
 import express from "express";
 import resumeRoutes from "./routes/resumeRoutes.js";
 import errorHandler from "./middlewares/errorHandler.js";
 import notFound from "./middlewares/notFound.js";
 import logger from "./middlewares/logger.js";
+import { initDB, testConnection } from "./config/db.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,6 +21,18 @@ app.use("/resumes", resumeRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port http://localhost:${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await testConnection();
+    await initDB();
+    console.log("Database connection successful");
+    app.listen(PORT, () => {
+      console.log(`Server is running on port http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();

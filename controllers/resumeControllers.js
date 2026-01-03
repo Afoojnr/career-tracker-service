@@ -1,85 +1,90 @@
-// @ts-nocheck
+import { query } from "../config/db.js";
 
-const resumes = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "123-456-7890",
-    yearsOfExperience: 5,
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    phone: "987-654-3210",
-    yearsOfExperience: 3,
-  },
-  {
-    id: 3,
-    name: "Michael Johnson",
-    email: "michael.johnson@example.com",
-    phone: "555-123-4567",
-    yearsOfExperience: 8,
-  },
-  {
-    id: 4,
-    name: "Aisha Khan",
-    email: "aisha.khan@example.com",
-    phone: "444-987-6543",
-    yearsOfExperience: 2,
-  },
-  {
-    id: 5,
-    name: "Carlos Mendes",
-    email: "carlos.mendes@example.com",
-    phone: "222-333-4444",
-    yearsOfExperience: 10,
-  },
-];
+export const createResume = async (req, res, next) => {
+  try {
+    console.log("Request Body:", req.body);
+    const { name, email, phone, years_of_experience } = req.body;
 
-export const getResumes = (req, res) => {
-  res.json(resumes);
-};
+    const sql = `
+      INSERT INTO resumes (name, email, phone, years_of_experience)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *;
+    `;
+    const params = [name, email, phone, years_of_experience];
 
-export const getResumeById = (req, res) => {
-  const id = parseInt(req.params.id); // "2" string
-  const resume = resumes.find((r) => r.id === id);
-
-  if (resume) {
-    res.status(200).json(resume);
-  } else {
-    res.status(404).json({ error: "Resume not found" });
+    const result = await query(sql, params);
+    const resume = result.rows[0];
+    res.status(201).json(resume);
+  } catch (error) {
+    console.log(error.message);
+    next(error);
   }
 };
 
-export const createResume = (req, res) => {
-  const newResume = req.body;
-  newResume.id = resumes.length + 1;
-  resumes.push(newResume);
-  res.status(201).json(newResume); // 201 Created
+export const getResumes = async (req, res, next) => {
+  try {
+    const sql = "SELECT * FROM resumes;";
+    const result = await query(sql);
+    const resumes = result.rows;
+    res.status(200).json(resumes);
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const updateResume = (req, res) => {
-  const id = parseInt(req.params.id);
-  const resumeIndex = resumes.findIndex((r) => r.id === id);
-
-  if (resumeIndex === -1) {
-    return res.status(404).json({ error: "Resume not found" });
+export const getResumeById = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const sql = "SELECT * FROM resumes WHERE id = $1;";
+    const params = [id];
+    const result = await query(sql, params);
+    const resume = result.rows[0];
+    if (resume) {
+      res.status(200).json(resume);
+    } else {
+      next({ status: 404, message: "Resume not found" });
+    }
+  } catch (error) {
+    next(error);
   }
-
-  resumes[resumeIndex] = { id, ...req.body };
-  res.status(200).json(resumes[resumeIndex]);
 };
+export const updateResume = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const { name, email, phone, years_of_experience } = req.body;
 
-export const deleteResume = (req, res) => {
-  const id = parseInt(req.params.id);
-  const resumeIndex = resumes.findIndex((r) => r.id === id);
+    const sql = `
+      UPDATE resumes
+      SET name = $1, email = $2, phone = $3, years_of_experience = $4
+      WHERE id = $5
+      RETURNING *;
+    `;
+    const params = [name, email, phone, years_of_experience, id];
 
-  if (resumeIndex === -1) {
-    return res.status(404).json({ error: "Resume not found" });
+    const result = await query(sql, params);
+    const resume = result.rows[0];
+    if (resume) {
+      res.status(200).json(resume);
+    } else {
+      next({ status: 404, message: "Resume not found" });
+    }
+  } catch (error) {
+    next(error);
   }
-
-  resumes.splice(resumeIndex, 1);
-  res.status(204).send(); // 204 No Content
+};
+export const deleteResume = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const sql = "DELETE FROM resumes WHERE id = $1 RETURNING *;";
+    const params = [id];
+    const result = await query(sql, params);
+    const resume = result.rows[0];
+    if (resume) {
+      res.status(204).send();
+    } else {
+      next({ status: 404, message: "Resume not found" });
+    }
+  } catch (error) {
+    next(error);
+  }
 };
