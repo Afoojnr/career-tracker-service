@@ -1,0 +1,1 @@
+ALTER TABLE "resumes" ADD COLUMN "about" varchar(1000) NOT NULL;
