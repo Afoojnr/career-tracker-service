@@ -3,7 +3,7 @@ import resumeRoutes from "./routes/resumeRoutes.js";
 import errorHandler from "./middlewares/errorHandler.js";
 import notFound from "./middlewares/notFound.js";
 import logger from "./middlewares/logger.js";
-import { initDB, testConnection } from "./config/db.js";
+import { testConnection } from "./db/config.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,7 +24,6 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     await testConnection();
-    await initDB();
     console.log("Database connection successful");
     app.listen(PORT, () => {
       console.log(`Server is running on port http://localhost:${PORT}`);
